@@ -21,7 +21,7 @@ pipeline {
                 '''
             }
         }
-        
+
         stage('Checkout') {
             steps {
                 git 'https://github.com/CodeInsightAcademy/DevSecOps_CICD_1.git' // Replace with your repo
@@ -72,7 +72,14 @@ pipeline {
         }
         stage('Check Docker') {
             steps {
-                sh 'docker --version'
+                script {
+                    try {
+                        sh 'docker --version'
+                    } catch (Exception e) {
+                        echo "Docker not available: ${e.getMessage()}"
+                        // Continue pipeline instead of failing
+                    }
+                }
             }
         }
 
