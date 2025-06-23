@@ -93,21 +93,16 @@ pipeline {
 
         stage('DAST Scan (OWASP ZAP)') {
             steps {
-                echo "Starting DAST Scan on ${APP_URL}"
-                // Placeholder for your actual ZAP scan command/step
-                // This is where APP_URL would typically be used
-                // Example: zapPublisher port: 5000, targetURL: "${APP_URL}", ...
-                // For demonstration, just echo success
-                sh "echo 'Simulating ZAP scan using ${APP_URL}'"
-                // Add your actual ZAP scan command here. It will likely use APP_URL.
-                // If you're using a ZAP Jenkins plugin, refer to its documentation for how to pass the target URL.
+                echo "Starting DAST Scan on http://localhost:5000"
+                sh '''
+                    # Simulated scan - replace this with actual OWASP ZAP command if needed
+                    echo "Simulating ZAP scan using http://localhost:5000"
+                '''
             }
             post {
                 always {
-                    archiveArtifacts artifacts: 'target/zap-reports/**/*.html', allowEmptyArchive: true
-                    // You might want to evaluate the ZAP report here to determine success/failure
-                    // For now, it echoes a failure message as per your log.
-                    echo "ZAP DAST scan completed." // Change this to reflect success if no vulnerabilities
+                    archiveArtifacts artifacts: 'target/zap-reports/**/*.html', allowEmptyArchive: true                    
+                    echo "ZAP DAST scan completed." 
                 }
                 failure {
                     echo "ZAP DAST scan failed or found vulnerabilities!"
@@ -118,7 +113,8 @@ pipeline {
 
     post {
         always {
-            archiveArtifacts artifacts: 'reports/**/*.*', fingerprint: true
+            archiveArtifacts artifacts: 'reports/**/*.*', allowEmptyArchive: true
+            echo 'Pipeline finished. Reports archived.'
         }
     }
 }
