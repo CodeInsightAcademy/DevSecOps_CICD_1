@@ -75,14 +75,6 @@ pipeline {
             }
         }
 
-        // stage('Build and Run Flask App') {
-        //     steps {
-        //         sh '''
-        //             nohup python3 app.py > flask.log 2>&1 &
-        //             sleep 5
-        //         '''
-        //     }
-        // }
        
         stage('Deploy App Locally') {
             steps {
@@ -99,15 +91,33 @@ pipeline {
         }
     
 
+        // stage('DAST Scan (ZAP)') {
+        //     steps {
+        //         sh '''
+        //             docker run --rm -v $PWD:/zap/wrk --network host ghcr.io/zaproxy/zaproxy:stable \
+        //                 zap-baseline.py -t ${TARGET_URL} -r zap-report.html || true
+        //         '''
+        //     }
+        // }
         stage('DAST Scan (ZAP)') {
             steps {
-                sh '''
-                    docker run --rm -v $PWD:/zap/wrk --network host ghcr.io/zaproxy/zaproxy:stable \
-                        zap-baseline.py -t ${TARGET_URL} -r zap-report.html || true
-                '''
+                script {
+                    sh '''
+                        echo "Running ZAP scan against Gunicorn app..."
+
+                        # Wait for gunicorn app to be fully started
+                        sleep 10
+
+                        # Run ZAP Baseline Scan
+                        docker run --rm \
+                            -v $PWD:/zap/wrk \
+                            --network host \
+                            ghcr.io/zaproxy/zaproxy:stable \
+                            zap-baseline.py -t http://localhost:5000 -r zap-report.html || true
+                    '''
+                }
             }
         }
-
         
     }
      post {
