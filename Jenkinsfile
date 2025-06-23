@@ -17,7 +17,7 @@ pipeline {
             steps {
                 sh '''
                     python3 -m venv venv
-                    source venv/bin/activate
+                    . venv/bin/activate
                     pip install --upgrade pip
                     pip install safety
                     mkdir -p reports/sca
@@ -29,7 +29,7 @@ pipeline {
         stage('SAST - Bandit Scan') {
             steps {
                 sh '''
-                    source venv/bin/activate
+                    . venv/bin/activate
                     pip install bandit
                     mkdir -p reports/sast
                     bandit -r . -f html -o reports/sast/bandit.html || true
