@@ -16,9 +16,12 @@ pipeline {
         stage('SCA - Dependency Check') {
             steps {
                 sh '''
-                    mkdir -p $REPORTS_DIR/sca
+                    python3 -m venv venv
+                    source venv/bin/activate
+                    pip install --upgrade pip
                     pip install safety
-                    safety check --full-report > $REPORTS_DIR/sca/safety.txt || true
+                    mkdir -p reports/sca
+                    safety check --full-report > reports/sca/safety.txt || true
                 '''
             }
         }
@@ -26,9 +29,10 @@ pipeline {
         stage('SAST - Bandit Scan') {
             steps {
                 sh '''
-                    mkdir -p $REPORTS_DIR/sast
+                    source venv/bin/activate
                     pip install bandit
-                    bandit -r . -f html -o $REPORTS_DIR/sast/bandit.html || true
+                    mkdir -p reports/sast
+                    bandit -r . -f html -o reports/sast/bandit.html || true
                 '''
             }
         }
