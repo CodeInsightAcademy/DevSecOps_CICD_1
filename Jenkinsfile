@@ -105,10 +105,12 @@ pipeline {
 
         
     }
-    always {
+     post {
+        always {
             sh 'docker stop ${CONTAINER_NAME} || true'
             archiveArtifacts artifacts: 'zap-report.html', allowEmptyArchive: true
         }
+    }
 
     // post {
     //     always {
