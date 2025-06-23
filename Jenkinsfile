@@ -4,6 +4,13 @@ pipeline {
     environment {
         PYTHON = 'python3'
         REPORTS_DIR = 'reports'
+        APP_URL = "http://localhost:5000"
+        APP_PORT = '5000'
+        VENV_DIR = 'venv'
+        ZAP_REPORT_PATH = "${WORKSPACE}/zap_report.html"
+        
+        DEPENDENCY_CHECK_REPORT_PATH = "${WORKSPACE}/dependency-check-report.html"
+        BANDIT_REPORT_PATH = "${WORKSPACE}/bandit_report.json"
     }
 
     stages {
