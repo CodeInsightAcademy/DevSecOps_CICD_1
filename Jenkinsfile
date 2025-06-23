@@ -40,6 +40,7 @@ pipeline {
         stage('Install & Unit Tests') {
             steps {
                 sh '''
+                    . venv/bin/activate
                     pip install -r requirements.txt
                     pytest || true
                 '''
