@@ -8,6 +8,8 @@ pipeline {
         APP_PORT = '5000'
         VENV_DIR = 'venv'
         ZAP_REPORT_PATH = "${WORKSPACE}/zap_report.html"
+
+        FLASK_APP = "app.py"
         
         DEPENDENCY_CHECK_REPORT_PATH = "${WORKSPACE}/dependency-check-report.html"
         BANDIT_REPORT_PATH = "${WORKSPACE}/bandit_report.json"
@@ -81,19 +83,22 @@ pipeline {
         //         '''
         //     }
         // }
-        stage('Build Docker Image') {
+       
+        stage('Deploy App Locally') {
             steps {
-                sh 'docker build -t ${APP_IMAGE} .'
-            }
-        }
-        stage('Run App Container') {
-            steps {
+                // Stop any existing gunicorn process if running on port 5000
                 sh '''
-                    docker run -d --rm --name ${CONTAINER_NAME} -p ${APP_PORT}:${APP_PORT} ${APP_IMAGE}
-                    sleep 10
+                    pkill -f "gunicorn" || true
+                '''
+                // Start the app with gunicorn in the background, binding to port 5000
+                sh '''
+                    . ${VENV_DIR}/bin/activate
+                    nohup gunicorn --bind 0.0.0.0:5000 app:app > app.log 2>&1 &
                 '''
             }
         }
+    
+
         stage('DAST Scan (ZAP)') {
             steps {
                 sh '''
@@ -107,8 +112,12 @@ pipeline {
     }
      post {
         always {
-            sh 'docker stop ${CONTAINER_NAME} || true'
+             sh '''
+                pkill -f "gunicorn" || true
+            '''
             archiveArtifacts artifacts: 'zap-report.html', allowEmptyArchive: true
+            archiveArtifacts artifacts: 'reports/**/*.*', allowEmptyArchive: true
+            echo 'All reports archived and processes cleaned up.'
         }
     }
 
