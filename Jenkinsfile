@@ -7,6 +7,21 @@ pipeline {
     }
 
     stages {
+        stage('Install Dependencies') {
+            steps {
+                sh '''
+                    apt-get update && \
+                    apt-get install -y python3 python3-pip python3-venv git
+
+                    python3 -m venv venv
+                    . venv/bin/activate
+
+                    pip install --upgrade pip
+                    pip install -r requirements.txt
+                '''
+            }
+        }
+        
         stage('Checkout') {
             steps {
                 git 'https://github.com/CodeInsightAcademy/DevSecOps_CICD_1.git' // Replace with your repo
@@ -53,6 +68,11 @@ pipeline {
                     nohup python3 app.py > flask.log 2>&1 &
                     sleep 5
                 '''
+            }
+        }
+        stage('Check Docker') {
+            steps {
+                sh 'docker --version'
             }
         }
 
