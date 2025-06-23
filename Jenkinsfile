@@ -77,38 +77,17 @@ pipeline {
                 '''
             }
         }
+        stage('DAST Scan (ZAP)') {
+            steps {
+                sh '''
+                    docker run --rm -v $PWD:/zap/wrk ghcr.io/zaproxy/zaproxy:stable \
+                    zap-baseline.py -t http://host.docker.internal:5000 -r zap-report.html || true
+                '''
+            }
+        }
         
-        stage('Deploy App for DAST') {
-            steps {
-                sh '''
-                    . venv/bin/activate
-                    nohup python3 app.py &
-                    sleep 10
-                    curl --fail ${APP_URL} # Use the defined APP_URL here as well
-                    echo "App is running for DAST scan!"
-                '''
-            }
-           
-        }
 
-        stage('DAST Scan (OWASP ZAP)') {
-            steps {
-                echo "Starting DAST Scan on http://localhost:5000"
-                sh '''
-                    # Simulated scan - replace this with actual OWASP ZAP command if needed
-                    echo "Simulating ZAP scan using http://localhost:5000"
-                '''
-            }
-            post {
-                always {
-                    archiveArtifacts artifacts: 'target/zap-reports/**/*.html', allowEmptyArchive: true                    
-                    echo "ZAP DAST scan completed." 
-                }
-                failure {
-                    echo "ZAP DAST scan failed or found vulnerabilities!"
-                }
-            }
-        }
+        
     }
 
     post {
