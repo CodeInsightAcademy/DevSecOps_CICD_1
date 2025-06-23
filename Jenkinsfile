@@ -11,6 +11,10 @@ pipeline {
         
         DEPENDENCY_CHECK_REPORT_PATH = "${WORKSPACE}/dependency-check-report.html"
         BANDIT_REPORT_PATH = "${WORKSPACE}/bandit_report.json"
+
+        APP_IMAGE = 'flask-app'
+        CONTAINER_NAME = 'flask-app-container'       
+        TARGET_URL = "http://localhost:${APP_PORT}"
     }
 
     stages {
@@ -69,31 +73,47 @@ pipeline {
             }
         }
 
-        stage('Build and Run Flask App') {
+        // stage('Build and Run Flask App') {
+        //     steps {
+        //         sh '''
+        //             nohup python3 app.py > flask.log 2>&1 &
+        //             sleep 5
+        //         '''
+        //     }
+        // }
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t ${APP_IMAGE} .'
+            }
+        }
+        stage('Run App Container') {
             steps {
                 sh '''
-                    nohup python3 app.py > flask.log 2>&1 &
-                    sleep 5
+                    docker run -d --rm --name ${CONTAINER_NAME} -p ${APP_PORT}:${APP_PORT} ${APP_IMAGE}
+                    sleep 10
                 '''
             }
         }
         stage('DAST Scan (ZAP)') {
             steps {
                 sh '''
-                    docker run --rm -v $PWD:/zap/wrk ghcr.io/zaproxy/zaproxy:stable \
-                    zap-baseline.py -t http://host.docker.internal:5000 -r zap-report.html || true
+                    docker run --rm -v $PWD:/zap/wrk --network host ghcr.io/zaproxy/zaproxy:stable \
+                        zap-baseline.py -t ${TARGET_URL} -r zap-report.html || true
                 '''
             }
         }
-        
 
         
     }
-
-    post {
-        always {
-            archiveArtifacts artifacts: 'reports/**/*.*', allowEmptyArchive: true
-            echo 'Pipeline finished. Reports archived.'
+    always {
+            sh 'docker stop ${CONTAINER_NAME} || true'
+            archiveArtifacts artifacts: 'zap-report.html', allowEmptyArchive: true
         }
-    }
+
+    // post {
+    //     always {
+    //         archiveArtifacts artifacts: 'reports/**/*.*', allowEmptyArchive: true
+    //         echo 'Pipeline finished. Reports archived.'
+    //     }
+    // }
 }
